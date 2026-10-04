@@ -1,9 +1,12 @@
 "use client";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function ReinitialiserMotDePassePage() {
+// `useSearchParams` force le rendu côté client : le composant qui le consomme
+// doit être enveloppé dans une frontière Suspense, sinon le build échoue au
+// prerendu avec « useSearchParams() should be wrapped in a suspense boundary ».
+function FormulaireReinitialisation() {
   const params = useSearchParams();
   const router = useRouter();
   const token = params.get("token") || "";
@@ -63,5 +66,13 @@ export default function ReinitialiserMotDePassePage() {
         </form>
       )}
     </div>
+  );
+}
+
+export default function ReinitialiserMotDePassePage() {
+  return (
+    <Suspense fallback={<div className="text-center text-sm text-slate-500">Chargement...</div>}>
+      <FormulaireReinitialisation />
+    </Suspense>
   );
 }

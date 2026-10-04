@@ -8,7 +8,7 @@ interface Props {
     id?: string;
     category?: string;
     titre?: string;
-    description?: string;
+    description?: string | null;
     ordre?: number;
     contenuTexte?: string | null;
     certificatTemplateUrl?: string | null;

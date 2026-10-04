@@ -137,4 +137,10 @@ export const dictionary = {
   },
 } as const;
 
-export type Dictionary = typeof dictionary["fr"];
+// Le dictionnaire est déclaré `as const`, ce qui transforme chaque valeur en
+// type littéral ("Connexion", "Log in", ...). On élargit les chaînes à `string`
+// pour que les deux locales restent assignables à un même type, tout en
+// conservant le contrôle des clés.
+type WidenStrings<T> = { [K in keyof T]: T[K] extends string ? string : WidenStrings<T[K]> };
+
+export type Dictionary = WidenStrings<typeof dictionary["fr"]>;
