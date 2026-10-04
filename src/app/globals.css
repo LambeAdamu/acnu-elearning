@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Thème neutre par défaut (pages publiques : login, register, en attente) */
+:root {
+  --acnu-primary: #0B1F3A;
+  --acnu-dark: #071429;
+  --acnu-accent: #C9A227;
+}
+
+/* --- Les 4 identités visuelles ACNU-LEARNING --- */
+/* 1. Diplomate Junior — Bordeaux + Bleu ONU */
+[data-theme="diplomate"] {
+  --acnu-primary: #7A1F2B;
+  --acnu-dark: #5C1620;
+  --acnu-accent: #009EDB;
+}
+/* 2. Député Junior — Bleu ONU */
+[data-theme="depute"] {
+  --acnu-primary: #009EDB;
+  --acnu-dark: #0072A3;
+  --acnu-accent: #5BC2E7;
+}
+/* 3. Ambassadeur Junior — Gris + Bleu */
+[data-theme="ambassadeur"] {
+  --acnu-primary: #4B5563;
+  --acnu-dark: #374151;
+  --acnu-accent: #2563EB;
+}
+/* 4. Sénateur Junior — Bleu nuit */
+[data-theme="senateur"] {
+  --acnu-primary: #0B1F3A;
+  --acnu-dark: #071429;
+  --acnu-accent: #C9A227;
+}
+
+body {
+  @apply bg-gris text-slate-800;
+}
+
+.btn-primary {
+  background-color: var(--acnu-primary);
+  @apply inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-semibold
+    text-white shadow transition-colors hover:opacity-90 focus:outline-none focus:ring-2
+    focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+.btn-primary:hover { background-color: var(--acnu-dark); }
+
+.btn-secondary {
+  border: 1px solid var(--acnu-primary);
+  color: var(--acnu-primary);
+  @apply inline-flex items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-semibold
+    shadow-sm transition-colors hover:bg-gris;
+}
+
+.card {
+  @apply bg-white rounded-lg shadow-sm border border-slate-100;
+}
+
+.input-field {
+  @apply w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none
+    focus:ring-2 focus:border-transparent;
+}
+.input-field:focus { box-shadow: 0 0 0 2px var(--acnu-accent); }
+
+.badge-accent {
+  background-color: var(--acnu-accent);
+  @apply text-white text-xs px-2 py-1 rounded-full font-medium;
+}
+
+.gradient-acnu {
+  background: linear-gradient(135deg, var(--acnu-primary) 0%, var(--acnu-dark) 100%);
+}

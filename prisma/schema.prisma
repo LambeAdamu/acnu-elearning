@@ -1,0 +1,180 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------------------------------------------------------------------------
+// ENUMS
+// ---------------------------------------------------------------------------
+
+enum Role {
+  APPRENANT
+  ADMIN
+  FORMATEUR
+}
+
+// Les 4 cursus ACNU-LEARNING. Un apprenant choisit UNE catégorie à
+// l'inscription et ne peut plus en changer ensuite.
+enum Category {
+  DIPLOMATE_JUNIOR
+  DEPUTE_JUNIOR
+  AMBASSADEUR_JUNIOR
+  SENATEUR_JUNIOR
+}
+
+enum StatutInscription {
+  EN_ATTENTE
+  VALIDE
+  REFUSE
+}
+
+// ---------------------------------------------------------------------------
+// MODELES
+// ---------------------------------------------------------------------------
+
+model User {
+  id                 String            @id @default(cuid())
+  email              String            @unique
+  telephone          String?
+  identifiant        String?           @unique // généré automatiquement à la validation admin
+  password           String?           // défini par le système à la validation (l'apprenant peut le changer ensuite)
+  mustChangePassword Boolean           @default(true)
+  nom                String
+  prenom             String
+  name               String?           // nom complet affiché (nom + prénom), calculé à la création
+
+  role               Role              @default(APPRENANT)
+  category           Category?         // catégorie choisie à l'inscription (obligatoire pour un APPRENANT validé)
+  statut             StatutInscription @default(EN_ATTENTE)
+
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  validatedAt         DateTime?
+  validatedById        String?
+
+  progressions       Progression[]
+  tentatives         Tentative[]
+  certificats        Certificat[]
+  createdModules     Module[]          @relation("Creator")
+  satisfactions      Satisfaction[]
+  resetTokens        PasswordResetToken[]
+}
+
+// Un module appartient à UN SEUL cursus (catégorie). L'ordre est unique
+// PAR catégorie (chaque cursus a sa propre numérotation linéaire 1,2,3...).
+model Module {
+  id           String   @id @default(cuid())
+  category     Category
+  titre        String
+  description  String?
+  ordre        Int
+  contenuVideo String?
+  contenuAudio String?
+  contenuTexte String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Modèle de certificat pré-signé (PDF fourni par l'admin) sur lequel le
+  // nom, la catégorie, le code unique et la date sont superposés. Si vide,
+  // un certificat est généré automatiquement (logo, signature, cachet ACNU).
+  certificatTemplateUrl String?
+  certifNomY             Float?  @default(420)
+  certifCodeY            Float?  @default(120)
+  certifDateY            Float?  @default(160)
+
+  creatorId    String
+  creator      User     @relation("Creator", fields: [creatorId], references: [id])
+
+  examens      Examen[]
+  progressions Progression[]
+  certificats  Certificat[]
+
+  @@unique([category, ordre])
+}
+
+model Examen {
+  id            String   @id @default(cuid())
+  moduleId      String   @unique
+  module        Module   @relation(fields: [moduleId], references: [id])
+  seuilReussite Int      @default(70)
+  duree         Int?
+  questions     Json
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tentatives    Tentative[]
+}
+
+model Progression {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id])
+  moduleId       String
+  module         Module    @relation(fields: [moduleId], references: [id])
+  estTermine     Boolean   @default(false)
+  note           Int?
+  dateCompletion DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([userId, moduleId])
+}
+
+model Tentative {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  examenId      String
+  examen        Examen    @relation(fields: [examenId], references: [id])
+  score         Int?
+  reussi        Boolean   @default(false)
+  reponses      Json
+  dateTentative DateTime  @default(now())
+  peutRepasser  DateTime?
+}
+
+model Certificat {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  moduleId      String
+  module        Module   @relation(fields: [moduleId], references: [id])
+  nom           String
+  category      Category
+  dateObtention DateTime @default(now())
+  urlFichier    String?
+  code          String   @unique // ex: ACNU-DEP26A1B2
+  createdAt     DateTime @default(now())
+
+  satisfaction  Satisfaction?
+}
+
+// Sondage de satisfaction proposé à l'apprenant après l'obtention d'un
+// certificat (Axe 3 du plan d'action : suivi & pilotage).
+model Satisfaction {
+  id           String     @id @default(cuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id])
+  certificatId String     @unique
+  certificat   Certificat @relation(fields: [certificatId], references: [id])
+  note         Int        // 1 à 5
+  commentaire  String?
+  createdAt    DateTime   @default(now())
+}
+
+// Jeton de réinitialisation de mot de passe (lien "mot de passe oublié").
+// Le jeton n'est jamais stocké en clair : seul son empreinte (hash) l'est.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}
