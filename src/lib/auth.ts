@@ -1,10 +1,10 @@
-import NextAuth from "next-auth";
+import { getServerSession, type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
@@ -62,4 +62,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
-});
+};
+
+// Rendu de session côté serveur (App Router). NextAuth v4 ne fournit pas
+// `auth()` : on l'expose via getServerSession pour que l'API des pages
+// resemble à celle de la v5.
+export const auth = () => getServerSession(authOptions);
